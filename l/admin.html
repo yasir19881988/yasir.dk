@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Yasir Foods | Pro Admin v15</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-white border-r flex flex-col p-6 shadow-sm z-10">
+        <div class="mb-8">
+            <div class="text-2xl font-black text-green-600 italic leading-none">YASIR</div>
+            <div class="text-2xl font-black text-slate-800 leading-none">FOODS</div>
+            <p class="text-[10px] text-slate-400 mt-2 font-bold tracking-widest uppercase">Label Manager v15</p>
+        </div>
+
+        <div id="quid-warning" class="hidden bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-xl text-[10px] font-bold mb-6 animate-pulse">
+            <i class="fa-solid fa-triangle-exclamation"></i> MANGLER QUID % (Jordbær/Æble/Kød)
+        </div>
+
+        <nav class="flex-1 space-y-4">
+            <button onclick="updatePreview()" class="w-full bg-green-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sync"></i> OPDATÉR PREVIEW
+            </button>
+            <button onclick="exportData()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-bold hover:bg-slate-900 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> EKSPORTÉR JSON
+            </button>
+            <div class="pt-4 border-t">
+                <label class="field-label font-bold text-slate-400">Importer label</label>
+                <input type="file" onchange="importData(this)" class="text-[10px] w-full">
+            </div>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-10 space-y-8 hide-scroll bg-gray-50">
+        
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-info-circle text-green-600"></i> 1. Basis Information</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Produktnavn</label><input id="name" oninput="updatePreview()" class="admin-input border w-full p-3 rounded-xl bg-slate-50" placeholder="f.eks. Jordbær Marmelade"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Brand</label><input id="brand" oninput="updatePreview()" class="admin-input border w-full p-3 rounded-xl bg-slate-50" placeholder="f.eks. Yasir Foods"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-tag text-green-600"></i> 2. Juridisk Varebetegnelse</div>
+            <input id="legal_name" oninput="updatePreview()" class="admin-input border w-full p-3 rounded-xl bg-slate-50" placeholder="f.eks. Økologisk frugtlavet marmelade...">
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm border-2 border-blue-100">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-list-ul text-blue-600"></i> 3. Ingredienser</div>
+            <div class="flex gap-2 mb-3">
+                <button onclick="execCmd('bold')" class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-black">B</button>
+                <button onclick="execCmd('italic')" class="px-3 py-1 bg-slate-100 rounded-lg text-xs italic font-serif">I</button>
+                <button onclick="makeUppercase()" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold">ABC</button>
+                <span class="text-[10px] text-slate-400 self-center italic ml-2">Marker tekst og tryk ABC for at skifte til store bogstaver</span>
+            </div>
+            <div id="ingredients_rte" contenteditable="true" oninput="updatePreview()" class="admin-input min-h-[150px] bg-white border-2 border-slate-100 p-4 rounded-xl outline-none focus:border-blue-400"></div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-triangle-exclamation text-orange-600"></i> 4. Allergener</div>
+            <div class="space-y-6">
+                <div>
+                    <label class="field-label text-green-600 italic font-bold text-[10px]">Vælg allergener i produktet:</label>
+                    <div id="btns-inc" class="flex flex-wrap gap-2 mt-2 mb-3"></div>
+                    <input id="alg_inc" class="admin-input bg-slate-50 text-[10px] border p-2 w-full rounded-lg" readonly>
+                </div>
+                <div>
+                    <label class="field-label text-orange-600 italic font-bold text-[10px]">Vælg mulige spor:</label>
+                    <div id="btns-spor" class="flex flex-wrap gap-2 mt-2 mb-3"></div>
+                    <input id="alg_spor" class="admin-input bg-slate-50 text-[10px] border p-2 w-full rounded-lg" readonly>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-chart-simple text-green-600"></i> 5. Næringsindhold (pr. 100g)</div>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="relative"><label class="field-label font-bold text-[10px] text-slate-400 uppercase">kJ</label><input id="kj" oninput="updatePreview()" class="admin-input border w-full p-2 rounded-lg bg-slate-50"><button onclick="convertEnergy('kj')" class="absolute right-2 top-8 text-[8px] bg-slate-200 px-1 rounded hover:bg-slate-300">TIL KCAL</button></div>
+                <div class="relative"><label class="field-label font-bold text-[10px] text-slate-400 uppercase">kcal</label><input id="kcal" oninput="updatePreview()" class="admin-input border w-full p-2 rounded-lg bg-slate-50"><button onclick="convertEnergy('kcal')" class="absolute right-2 top-8 text-[8px] bg-slate-200 px-1 rounded hover:bg-slate-300">TIL KJ</button></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Fedt</label><input id="fat" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Mættet</label><input id="sat" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Kulhydrat</label><input id="carb" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Sukker</label><input id="sugar" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Fibre</label><input id="fiber" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" value="0"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Protein</label><input id="protein" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Salt</label><input id="salt" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div class="col-span-3"><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Portionsstørrelse</label><input id="portion" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. pr. stk á 25g"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-truck text-slate-600"></i> 6. Logistik</div>
+            <div class="grid grid-cols-3 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">EAN Nummer</label><input id="ean" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Stk pr. kolli</label><input id="units_per_colli" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Bruttovægt (kg)</label><input id="gross_weight" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-microscope text-slate-600"></i> 7. Specifikationer</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Nettovægt</label><input id="netto" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Oprindelsesland</label><input id="origin" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Opbevaring</label><input id="storage" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Pant</label><input id="deposit" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div class="col-span-2"><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Anvendelse</label><textarea id="usage" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></textarea></div>
+            </div>
+        </section>
+
+        <section class="admin-card border-l-4 border-green-500 bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-green-600"><i class="fa-solid fa-recycle"></i> 8. Emballage & Sortering</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Papir & Pap</label><input id="env_papir" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. Sorteres som papir"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Plast</label><input id="env_plast" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. Blød plast"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Metal</label><input id="env_metal" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. Metal container"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Karton</label><input id="env_karton" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. Madkarton"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Glas</label><input id="env_glas" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="f.eks. Glasemballage"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-building text-slate-600"></i> 9. Virksomhed</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Firma Navn</label><input id="biz_name" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Adresse</label><input id="biz_addr" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-calendar-days text-slate-600"></i> 10. Datoer & Batch</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Bedst før</label><input id="best_before" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50" placeholder="DD.MM.YYYY"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Sidste anvendelsesdato</label><input id="last_date" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Efter åbning</label><input id="opened" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+                <div><label class="field-label font-bold text-[10px] text-slate-400 uppercase">Batch / Lot nr.</label><input id="batch" oninput="updatePreview()" class="admin-input border p-2 w-full rounded-lg bg-slate-50"></div>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-certificate text-slate-600"></i> 11. Officielle Mærkninger</div>
+            <div class="grid grid-cols-4 gap-4 text-center">
+                <label class="flex flex-col items-center p-4 border rounded-2xl cursor-pointer hover:bg-green-50"><input type="checkbox" id="m_dk_oko" onchange="updatePreview()" class="mb-2"> <span class="text-[10px] font-bold uppercase">ØKO</span></label>
+                <label class="flex flex-col items-center p-4 border rounded-2xl cursor-pointer hover:bg-blue-50"><input type="checkbox" id="m_keyhole" onchange="updatePreview()" class="mb-2"> <span class="text-[10px] font-bold uppercase">NØGLEHUL</span></label>
+                <label class="flex flex-col items-center p-4 border rounded-2xl cursor-pointer hover:bg-orange-50"><input type="checkbox" id="m_halal" onchange="updatePreview()" class="mb-2"> <span class="text-[10px] font-bold uppercase">HALAL</span></label>
+                <label class="flex flex-col items-center p-4 border rounded-2xl cursor-pointer hover:bg-emerald-50"><input type="checkbox" id="m_vegan" onchange="updatePreview()" class="mb-2"> <span class="text-[10px] font-bold uppercase">VEGAN</span></label>
+            </div>
+        </section>
+
+        <section class="admin-card border-l-4 border-red-500 bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-red-600"><i class="fa-solid fa-triangle-exclamation"></i> 12. Lovpligtige Advarsler</div>
+            <div class="grid grid-cols-2 gap-4">
+                <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl text-[10px] font-bold"><input type="checkbox" id="a_aspartam" onchange="updatePreview()"> INDEHOLDER ASPARTAM</label>
+                <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl text-[10px] font-bold"><input type="checkbox" id="a_polyol" onchange="updatePreview()"> OVERDREVEN BRUG (POLYOLER)</label>
+                <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl text-[10px] font-bold"><input type="checkbox" id="a_azo" onchange="updatePreview()"> AZO-FARVESTOFFER</label>
+                <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl text-[10px] font-bold"><input type="checkbox" id="a_lakrids" onchange="updatePreview()"> LAKRIDS (HØJT BLODTRYK)</label>
+            </div>
+        </section>
+
+        <section class="admin-card bg-white p-6 rounded-3xl shadow-sm">
+            <div class="section-title text-sm font-bold mb-4 flex items-center gap-2 text-slate-800"><i class="fa-solid fa-image text-slate-600"></i> 13. Produktbillede</div>
+            <div class="upload-zone border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center cursor-pointer hover:bg-slate-50 transition-all" onclick="document.getElementById('image-input').click()">
+                <input type="file" id="image-input" class="hidden" onchange="handleImage(this)">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">KLIK FOR AT UPLOADE BILLEDE</p>
+                <div id="preview-img-container" class="mt-4 hidden">
+                    <img id="preview-img" class="h-32 mx-auto rounded-lg shadow-sm">
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <aside class="w-[500px] bg-slate-200 p-8 flex items-center justify-center">
+        <div class="w-full h-full bg-white rounded-[3rem] shadow-2xl overflow-hidden border-[10px] border-white relative">
+            <iframe id="preview-frame" src="index.html" class="w-full h-full border-none"></iframe>
+        </div>
+    </aside>
+
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>

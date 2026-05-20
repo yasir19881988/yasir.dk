@@ -1,0 +1,15 @@
+{
+  "5701234567890": {
+    "name": "Økologisk Æblemost",
+    "brand": "Yasir Foods",
+    "ingredients": "100% økologiske æbler fra Danmark. Intet andet.",
+    "allergens": "Ingen",
+    "nutrition": {
+      "energy": "190 kJ / 45 kcal",
+      "fat": "0.1g",
+      "sugar": "10g",
+      "protein": "0.1g"
+    },
+    "image": "https://yasir.dk/label/img/apple-juice.jpg"
+  }
+}
