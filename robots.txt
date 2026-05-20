@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Keep AJAX/template-only fragments out of search results
+Disallow: /case-*.html
+Disallow: /blog-case-*.html
+Disallow: /portfolio-1.html
+Disallow: /portfolio-2.html
+Disallow: /portfolio-3.html
+Disallow: /index2.html
+
+Sitemap: https://www.yasir.dk/sitemap.xml
