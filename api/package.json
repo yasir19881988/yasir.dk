@@ -1,0 +1,9 @@
+{
+  "name": "yasirdk-swa-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Managed API for Azure Static Web Apps contact form",
+  "dependencies": {
+    "@azure/communication-email": "^1.0.0"
+  }
+}

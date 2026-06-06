@@ -1,46 +1,88 @@
 const { EmailClient } = require("@azure/communication-email");
 
-module.exports = async function (context, req) {
-    // 1. Hent felterne fra din HTML-formular
-    const { name, email, subject, message } = req.body;
-
-    if (!name || !email || !message) {
-        context.res = {
-            status: 400,
-            body: "Venligst udfyld alle felter."
-        };
-        return;
+function jsonResponse(status, type, message) {
+  return {
+    status,
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: {
+      type,
+      message
     }
+  };
+}
 
-    // 2. Forbind til Azures gratis mailsystem (Azure Communication Services)
-    // Forbindelsesstrengen gemmes sikkert i Azures indstillinger bagefter
-    const connectionString = process.env.AZURE_EMAIL_CONNECTION_STRING;
+function normalizeBody(req) {
+  const body = req && req.body ? req.body : {};
+  return {
+    name: String(body.name || "").trim(),
+    email: String(body.email || "").trim(),
+    subject: String(body.subject || "").trim(),
+    message: String(body.message || "").trim(),
+    honeypot: String(body.website || "").trim()
+  };
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+module.exports = async function (context, req) {
+  if (!req || req.method !== "POST") {
+    context.res = jsonResponse(405, "danger", "Method not allowed.");
+    return;
+  }
+
+  const { name, email, subject, message, honeypot } = normalizeBody(req);
+
+  // Silent spam trap: return success to bots without sending mail.
+  if (honeypot) {
+    context.res = jsonResponse(200, "success", "Contact form successfully submitted. Thank you, I will get back to you soon!");
+    return;
+  }
+
+  if (!name || !email || !message) {
+    context.res = jsonResponse(400, "danger", "Please fill in name, email and message.");
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    context.res = jsonResponse(400, "danger", "Please enter a valid email address.");
+    return;
+  }
+
+  const connectionString = process.env.AZURE_EMAIL_CONNECTION_STRING;
+  const senderAddress = process.env.AZURE_EMAIL_SENDER || "no-reply@yasir.dk";
+  const recipientAddress = process.env.CONTACT_RECIPIENT_EMAIL || "yasir@yasir.dk";
+
+  if (!connectionString) {
+    context.log.error("AZURE_EMAIL_CONNECTION_STRING is missing.");
+    context.res = jsonResponse(500, "danger", "There was an error while submitting the form. Please try again later.");
+    return;
+  }
+
+  try {
     const client = new EmailClient(connectionString);
 
-    try {
-        // 3. Send mailen afsted til dig selv
-        const emailMessage = {
-            senderAddress: "no-reply@yasir.dk", // Skal verificeres i Azure bagefter
-            content: {
-                subject: `Ny besked fra yasir.dk: ${subject || 'Kontaktformular'}`,
-                plainText: `Navn: ${name}\nE-mail: ${email}\n\nBesked:\n${message}`,
-            },
-            recipients: {
-                to: [{ address: "yasir@yasir.dk" }],
-            },
-        };
+    const emailMessage = {
+      senderAddress,
+      content: {
+        subject: `Ny besked fra yasir.dk: ${subject || "Kontaktformular"}`,
+        plainText: `Navn: ${name}\nE-mail: ${email}\n\nBesked:\n${message}`
+      },
+      recipients: {
+        to: [{ address: recipientAddress }]
+      },
+      replyTo: [{ address: email }]
+    };
 
-        await client.beginSend(emailMessage);
+    const poller = await client.beginSend(emailMessage);
+    await poller.pollUntilDone();
 
-        // 4. Send succes-svar tilbage til din HTML-side
-        context.res = {
-            status: 200,
-            body: "Beskeden er sendt med succes!"
-        };
-    } catch (error) {
-        context.res = {
-            status: 500,
-            body: "Der skete en fejl under afsendelse af mailen."
-        };
-    }
+    context.res = jsonResponse(200, "success", "Contact form successfully submitted. Thank you, I will get back to you soon!");
+  } catch (error) {
+    context.log.error("Contact mail send failed", error);
+    context.res = jsonResponse(500, "danger", "There was an error while submitting the form. Please try again later.");
+  }
 };
