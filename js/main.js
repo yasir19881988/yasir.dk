@@ -71,7 +71,7 @@
 
         $('#contact_form').on('submit', function (e) {
             if (!e.isDefaultPrevented()) {
-                var url = "/contact_form/contact_form.php";
+                var url = "/api/contact";
 
                 $.ajax({
                     type: "POST",
@@ -89,27 +89,8 @@
                         }
                     },
                     error: function () {
-                        // Fallback for environments where legacy endpoint path differs.
-                        $.ajax({
-                            type: "POST",
-                            url: "/api/contact",
-                            dataType: "json",
-                            data: $('#contact_form').serialize(),
-                            success: function (data) {
-                                var messageAlert = 'alert-' + data.type;
-                                var messageText = data.message;
-
-                                var alertBox = '<div class="alert ' + messageAlert + ' alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' + messageText + '</div>';
-                                if (messageAlert && messageText) {
-                                    $('#contact_form').find('.messages').html(alertBox);
-                                    $('#contact_form')[0].reset();
-                                }
-                            },
-                            error: function () {
-                                var alertBox = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>There was an error while submitting the form. Please try again later.</div>';
-                                $('#contact_form').find('.messages').html(alertBox);
-                            }
-                        });
+                        var alertBox = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>There was an error while submitting the form. Please try again later.</div>';
+                        $('#contact_form').find('.messages').html(alertBox);
                     }
                 });
                 return false;
