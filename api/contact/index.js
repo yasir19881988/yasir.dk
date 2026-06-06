@@ -65,7 +65,21 @@ function isValidEmail(email) {
 }
 
 module.exports = async function (context, req) {
-  if (!req || req.method !== "POST") {
+  const method = String((req && (req.method || (req.req && req.req.method))) || "").toUpperCase();
+
+  if (method === "OPTIONS") {
+    context.res = {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    };
+    return;
+  }
+
+  if (!req || method !== "POST") {
     context.res = jsonResponse(405, "danger", "Method not allowed.");
     return;
   }
