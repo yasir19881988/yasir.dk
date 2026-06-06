@@ -13,8 +13,44 @@ function jsonResponse(status, type, message) {
   };
 }
 
+function parseFormEncoded(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "string") {
+    return out;
+  }
+
+  raw.split("&").forEach((pair) => {
+    if (!pair) {
+      return;
+    }
+    const idx = pair.indexOf("=");
+    const key = idx >= 0 ? pair.slice(0, idx) : pair;
+    const value = idx >= 0 ? pair.slice(idx + 1) : "";
+    const decodedKey = decodeURIComponent(String(key).replace(/\+/g, " "));
+    const decodedValue = decodeURIComponent(String(value).replace(/\+/g, " "));
+    out[decodedKey] = decodedValue;
+  });
+
+  return out;
+}
+
 function normalizeBody(req) {
-  const body = req && req.body ? req.body : {};
+  let body = req && req.body ? req.body : {};
+
+  // Azure Functions may pass form-urlencoded payloads as raw string.
+  if (typeof body === "string") {
+    body = parseFormEncoded(body);
+  }
+
+  // Fallback if parser did not populate req.body.
+  if ((!body || typeof body !== "object") && req && req.rawBody) {
+    body = parseFormEncoded(req.rawBody);
+  }
+
+  if ((!body || typeof body !== "object") && req && req.query) {
+    body = req.query;
+  }
+
   return {
     name: String(body.name || "").trim(),
     email: String(body.email || "").trim(),

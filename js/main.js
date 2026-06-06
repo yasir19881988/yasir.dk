@@ -71,14 +71,14 @@
 
         $('#contact_form').on('submit', function (e) {
             if (!e.isDefaultPrevented()) {
-                var url = "contact_form/contact_form.php";
+                var url = "/api/contact";
 
                 $.ajax({
                     type: "POST",
                     url: url,
+                    dataType: "json",
                     data: $(this).serialize(),
-                    success: function (data)
-                    {
+                    success: function (data) {
                         var messageAlert = 'alert-' + data.type;
                         var messageText = data.message;
 
@@ -87,6 +87,10 @@
                             $('#contact_form').find('.messages').html(alertBox);
                             $('#contact_form')[0].reset();
                         }
+                    },
+                    error: function () {
+                        var alertBox = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>There was an error while submitting the form. Please try again later.</div>';
+                        $('#contact_form').find('.messages').html(alertBox);
                     }
                 });
                 return false;
