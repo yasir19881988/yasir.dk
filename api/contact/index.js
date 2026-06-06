@@ -94,7 +94,11 @@ function isValidEmail(email) {
 
 module.exports = async function (arg1, arg2) {
   const { context, req } = resolveInvocation(arg1, arg2);
-  const method = String((req && (req.method || (req.req && req.req.method))) || "").toUpperCase();
+  const rawMethod = String((req && (req.method || (req.req && req.req.method))) || "").toUpperCase();
+  const methodOverride = String(
+    (req && req.headers && (req.headers["x-http-method-override"] || req.headers["X-HTTP-Method-Override"])) || ""
+  ).toUpperCase();
+  const method = methodOverride || rawMethod;
 
   if (method === "OPTIONS") {
     context.res = {
@@ -108,8 +112,12 @@ module.exports = async function (arg1, arg2) {
     return context.res;
   }
 
-  if (!req || method !== "POST") {
-    context.res = jsonResponse(405, "danger", "Method not allowed.");
+  if (!req || (method !== "POST" && rawMethod !== "POST")) {
+    context.res = jsonResponse(
+      405,
+      "danger",
+      `Method not allowed. Received: ${rawMethod || "UNKNOWN"}`
+    );
     return context.res;
   }
 
