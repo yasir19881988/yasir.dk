@@ -69,8 +69,18 @@
 
         $('#contact_form').validator();
 
+        function refreshContactFormStart() {
+            $('#form_started_at').val(String(Date.now()));
+        }
+
+        refreshContactFormStart();
+
         $('#contact_form').on('submit', function (e) {
             if (!e.isDefaultPrevented()) {
+                if (!$('#form_started_at').val()) {
+                    refreshContactFormStart();
+                }
+
                 var url = "/api/contact";
 
                 $.ajax({
@@ -86,6 +96,7 @@
                         if (messageAlert && messageText) {
                             $('#contact_form').find('.messages').html(alertBox);
                             $('#contact_form')[0].reset();
+                            refreshContactFormStart();
                         }
                     },
                     error: function () {

@@ -103,7 +103,8 @@ async function normalizeBody(req) {
     email: readField(body, "email", "").trim(),
     subject: readField(body, "subject", "").trim(),
     message: readField(body, "message", "").trim(),
-    honeypot: readField(body, "website", "").trim()
+    honeypot: readField(body, "website", "").trim(),
+    formStartedAt: readField(body, "form_started_at", "").trim()
   };
 }
 
@@ -140,10 +141,20 @@ module.exports = async function (arg1, arg2) {
     return context.res;
   }
 
-  const { name, email, subject, message, honeypot } = await normalizeBody(req);
+  const { name, email, subject, message, honeypot, formStartedAt } = await normalizeBody(req);
+  const nowMs = Date.now();
+  const startedAtMs = Number(formStartedAt);
+  const submitDelayMs = Number.isFinite(startedAtMs) ? nowMs - startedAtMs : 0;
+  const minHumanDelayMs = 2500;
 
   // Silent spam trap: return success to bots without sending mail.
   if (honeypot) {
+    context.res = jsonResponse(200, "success", "Contact form successfully submitted. Thank you, I will get back to you soon!");
+    return context.res;
+  }
+
+  // Time trap: bots often submit immediately or with invalid timestamps.
+  if (!Number.isFinite(startedAtMs) || submitDelayMs < minHumanDelayMs || submitDelayMs > 1000 * 60 * 60 * 24) {
     context.res = jsonResponse(200, "success", "Contact form successfully submitted. Thank you, I will get back to you soon!");
     return context.res;
   }
