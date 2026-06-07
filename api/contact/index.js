@@ -79,12 +79,31 @@ async function normalizeBody(req) {
     body = req.query;
   }
 
+  function readField(source, key, fallback = "") {
+    if (!source) {
+      return fallback;
+    }
+
+    if (typeof source.get === "function") {
+      const viaGet = source.get(key);
+      if (viaGet !== undefined && viaGet !== null) {
+        return String(viaGet);
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      return String(source[key] ?? "");
+    }
+
+    return fallback;
+  }
+
   return {
-    name: String(body.name || "").trim(),
-    email: String(body.email || "").trim(),
-    subject: String(body.subject || "").trim(),
-    message: String(body.message || "").trim(),
-    honeypot: String(body.website || "").trim()
+    name: readField(body, "name", "").trim(),
+    email: readField(body, "email", "").trim(),
+    subject: readField(body, "subject", "").trim(),
+    message: readField(body, "message", "").trim(),
+    honeypot: readField(body, "website", "").trim()
   };
 }
 
@@ -156,7 +175,7 @@ module.exports = async function (arg1, arg2) {
       senderAddress,
       content: {
         subject: `Ny besked fra yasir.dk: ${subject || "Kontaktformular"}`,
-        plainText: `Navn: ${name}\nE-mail: ${email}\n\nBesked:\n${message}`
+        plainText: `Emne: ${subject || "Kontaktformular"}\nNavn: ${name}\nE-mail: ${email}\n\nBesked:\n${message}`
       },
       recipients: {
         to: [{ address: recipientAddress }]
